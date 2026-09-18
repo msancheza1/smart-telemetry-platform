@@ -1,0 +1,3 @@
+SERVER_HOST = "localhost"
+SERVER_PORT = 5000
+SEND_INTERVAL = 5
