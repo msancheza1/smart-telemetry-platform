@@ -1,234 +1,103 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <pthread.h>
+#include <signal.h>
 
 
-#include "models.h"
-#include "protocol.h"
-#include "telemetry.h"
+#include "udp_server.h"
+#include "tcp_server.h"
 
 
 
-#define UDP_PORT 5000
-#define BUFFER_SIZE 1024
+void *udp_thread(void *arg)
+{
+
+    start_udp_server();
+
+    return NULL;
+
+}
+
+
+
+void *tcp_thread(void *arg)
+{
+
+    start_tcp_server();
+
+    return NULL;
+
+}
+
 
 
 
 int main()
 {
 
-    int server_socket;
+    signal(SIGPIPE, SIG_IGN);
 
 
-    struct sockaddr_in server_address;
-    struct sockaddr_in client_address;
-
-
-    socklen_t client_length;
-
-
-    char buffer[BUFFER_SIZE];
+    printf("\n");
+    printf("===============================\n");
+    printf(" SMART TELEMETRY PLATFORM\n");
+    printf(" CENTRAL SERVER\n");
+    printf("===============================\n\n");
 
 
 
-    /*
-        Crear socket UDP
-    */
-
-    server_socket = socket(
-        AF_INET,
-        SOCK_DGRAM,
-        0
-    );
-
-
-    if(server_socket < 0)
-    {
-
-        perror("Error creando socket");
-
-        return 1;
-    }
-
-
-    printf("Socket UDP creado correctamente\n");
+    pthread_t udp_tid;
+    pthread_t tcp_tid;
 
 
 
     /*
-        Configuración del servidor
+        Crear servidor UDP
     */
 
-
-    memset(
-        &server_address,
-        0,
-        sizeof(server_address)
-    );
-
-
-    server_address.sin_family = AF_INET;
-
-
-    server_address.sin_addr.s_addr =
-        INADDR_ANY;
-
-
-    server_address.sin_port =
-        htons(UDP_PORT);
-
-
-
-    /*
-        Asociar socket al puerto
-    */
-
-
-    if(bind(
-        server_socket,
-        (struct sockaddr *)&server_address,
-        sizeof(server_address)
-    ) < 0)
-    {
-
-        perror("Error en bind");
-
-        close(server_socket);
-
+    if (pthread_create(
+        &udp_tid,
+        NULL,
+        udp_thread,
+        NULL
+    ) != 0) {
+        perror("pthread_create UDP");
         return 1;
     }
 
 
 
-    printf(
-        "Servidor UDP escuchando en puerto %d\n",
-        UDP_PORT
-    );
-
-
-
     /*
-        Recepción continua de mensajes
+        Crear servidor TCP
     */
 
-
-    while(1)
-    {
-
-        client_length =
-            sizeof(client_address);
-
-
-
-        int bytes_received =
-            recvfrom(
-                server_socket,
-                buffer,
-                BUFFER_SIZE - 1,
-                0,
-                (struct sockaddr *)&client_address,
-                &client_length
-            );
-
-
-
-        if(bytes_received < 0)
-        {
-
-            perror("Error recibiendo datos");
-
-            continue;
-        }
-
-
-
-        buffer[bytes_received] = '\0';
-
-
-
-        printf("\nMensaje recibido:\n");
-
-        printf("%s\n", buffer);
-
-
-
-        printf(
-            "Cliente: %s\n",
-            inet_ntoa(client_address.sin_addr)
-        );
-
-
-
-        /*
-            Procesamiento del protocolo
-        */
-
-
-        NodeTelemetry node;
-
-
-
-        if(parse_telemetry(buffer, &node))
-        {
-
-            update_node(node);
-
-
-
-            printf("\nNodo actualizado correctamente:\n");
-
-
-            printf(
-                "ID: %s\n",
-                node.id
-            );
-
-
-            printf(
-                "Temperatura: %.2f\n",
-                node.temperature
-            );
-
-
-            printf(
-                "Humedad: %.2f\n",
-                node.humidity
-            );
-
-
-            printf(
-                "Energia: %.2f\n",
-                node.energy
-            );
-
-
-            printf(
-                "Vibracion: %.2f\n",
-                node.vibration
-            );
-
-        }
-
-        else
-        {
-
-            printf(
-                "Mensaje invalido\n"
-            );
-
-        }
-
-
+    if (pthread_create(
+        &tcp_tid,
+        NULL,
+        tcp_thread,
+        NULL
+    ) != 0) {
+        perror("pthread_create TCP");
+        return 1;
     }
 
 
 
-    close(server_socket);
+
+    /*
+        Mantener procesos vivos
+    */
+
+    pthread_join(
+        udp_tid,
+        NULL
+    );
+
+
+    pthread_join(
+        tcp_tid,
+        NULL
+    );
+
 
 
     return 0;
