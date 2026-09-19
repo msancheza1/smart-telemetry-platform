@@ -1,4 +1,5 @@
 import socket
+import sys
 
 SERVER_HOST = "localhost"
 SERVER_PORT = 5001
@@ -11,6 +12,7 @@ def connect_to_server():
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        client_socket.settimeout(5)
         client_socket.connect(
             (SERVER_HOST, SERVER_PORT)
         )
@@ -42,11 +44,15 @@ def send_command(command):
         return None
 
     try:
-        client_socket.sendall(
-            command.encode("utf-8")
-        )
+        client_socket.sendall((command + "\n").encode("utf-8"))
 
-        response = client_socket.recv(4096)
+        chunks = []
+        while True:
+            chunk = client_socket.recv(4096)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        response = b"".join(chunks)
 
         if not response:
             print("\n[ERROR] El servidor cerró la conexión sin responder.\n")
@@ -123,6 +129,13 @@ def show_menu():
 
 
 def main():
+
+    global SERVER_HOST
+    if len(sys.argv) > 2:
+        print("Uso: python client.py [server_host]")
+        return
+    if len(sys.argv) == 2:
+        SERVER_HOST = sys.argv[1]
 
     while True:
 

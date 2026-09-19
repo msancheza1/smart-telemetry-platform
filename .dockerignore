@@ -1,0 +1,5 @@
+.git
+*.pyc
+__pycache__
+server/src/server
+server/smart_server

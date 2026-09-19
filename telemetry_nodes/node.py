@@ -115,18 +115,22 @@ def send_telemetry(node_id, server_host, server_port):
 
 def main():
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
 
         print("Uso:")
-        print("python node.py NODE01")
+        print("python node.py NODE01 [server_host]")
 
         return
 
     node_id = sys.argv[1].upper()
 
+    if not node_id or not node_id.isascii() or len(node_id) >= 32 or not all(c.isalnum() or c in "_-" for c in node_id):
+        print("[ERROR] El ID debe tener 1 a 31 caracteres alfanumericos, _ o -.")
+        return
+
     send_telemetry(
         node_id,
-        SERVER_HOST,
+        sys.argv[2] if len(sys.argv) == 3 else SERVER_HOST,
         SERVER_PORT
     )
 
