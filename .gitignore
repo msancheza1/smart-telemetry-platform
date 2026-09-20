@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Binarios compilados del servidor en C
+server/smart_server
+server/src/server
+*.o
