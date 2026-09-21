@@ -4,6 +4,10 @@ Plataforma distribuida de telemetría compuesta por un servidor central en C, no
 
 El servidor está pensado para Linux o WSL con `gcc`, `make` y pthreads; los clientes y el panel requieren Python 3.
 
+![Arquitectura del sistema](docs/assets/diagrama/arquitectura.png)
+
+Los nodos y los clientes operador se ejecutan en equipos externos y localizan el servidor por nombre DNS. El servidor central y el panel web se ejecutan dentro de un mismo contenedor Docker sobre una instancia EC2. El panel no accede al estado por un camino privilegiado: consulta al servidor mediante el mismo protocolo TCP que utilizan los operadores.
+
 ## Estado del proyecto
 
 El sistema fue desplegado y probado en una instancia EC2 de AWS Academy Learner Lab el 20 de septiembre de 2026. La ejecución documentada utilizó Amazon Linux 2023, una instancia `t3.small` en `us-east-1` y la imagen Docker `smart-telemetry:v1`.
@@ -19,7 +23,9 @@ Se comprobaron:
 - recuperación de nodos después de inactividad y reinicio;
 - una prueba con 100 mensajes UDP transmitidos, 100 recibidos y 0 pérdidas estimadas en esa ejecución.
 
-Las capturas y el análisis de Wireshark continúan pendientes para completar las evidencias de red de la entrega.
+El análisis de tráfico con Wireshark se realizó ese mismo día sobre una captura de 567 paquetes tomada contra la instancia desplegada, que contiene los tres tipos de comunicación del sistema: 90 datagramas UDP de telemetría, 477 segmentos TCP de consultas y panel web, y 36 peticiones HTTP. El análisis completo, con seis figuras, está en [docs/analisis-trafico-wireshark.md](docs/analisis-trafico-wireshark.md), y el archivo `.pcapng` se conserva como evidencia en `docs/assets/wireshark/`.
+
+El informe técnico de la entrega se encuentra en `docs/`, en formato Word y PDF. Quedan pendientes las evidencias individuales de dos de los integrantes y el video de sustentación.
 
 ## Ejecutar
 
@@ -164,7 +170,21 @@ También se verificó que los nodos dejan de aparecer como activos después de 1
 
 ## Documentación
 
-- [Especificación del protocolo](docs/protocol.md)
-- [Informe de despliegue y pruebas](docs/smart_telemetry_resultados_despliegue.md)
+**Informe de la entrega**
 
-Las capturas de Wireshark deben obtenerse durante una ejecución real; el código no genera esas evidencias automáticamente.
+- `docs/Informe tecnico - Plataforma Distribuida de Telemetria.docx` — informe técnico completo, editable
+- `docs/Informe tecnico - Plataforma Distribuida de Telemetria.pdf` — la misma versión para entregar
+
+**Documentos de apoyo**
+
+- [Especificación del protocolo](docs/protocol.md) — formato de mensajes, comandos, respuestas y códigos de error
+- [Protocolo, sockets y concurrencia](docs/analisis-protocolo-sockets-concurrencia.md) — diseño e implementación, con referencias a archivo y línea
+- [Análisis de tráfico con Wireshark](docs/analisis-trafico-wireshark.md) — seis figuras sobre la captura tomada contra la instancia
+- [Informe de despliegue y pruebas](docs/smart_telemetry_resultados_despliegue.md) — instalación en EC2, Docker y pruebas funcionales
+- [Evidencias individuales — Juan José Díaz](docs/evidencias-individuales-jjdiaz.md)
+
+**Evidencias**
+
+Las imágenes y capturas están en `docs/assets/`, organizadas en `aws/` (consola de EC2 y reglas de seguridad), `wireshark/` (figuras del análisis y el archivo `.pcapng`), `evidencias/` (pantallazos individuales) y `diagrama/` (arquitectura del sistema).
+
+Las capturas de Wireshark deben obtenerse durante una ejecución real contra el servidor desplegado; el código no genera esas evidencias automáticamente. Para repetir la captura, filtre por la dirección de la instancia sobre el adaptador de red físico, nunca sobre una interfaz virtual de WSL o Docker.
