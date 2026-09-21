@@ -221,3 +221,7 @@ __marimo__/
 server/smart_server
 server/src/server
 *.o
+
+# Archivos temporales de Office
+~$*
+*.tmp
